@@ -4,10 +4,13 @@
 .button {
   @include mixins.button($primary, white, $hover);
   border: 0;
+  font-weight: 400;
 
   &_alt {
     @include mixins.button(white, $primaryLight, $primaryLight);
     border: $defaultBorder;
+    font-weight: 400;
+
     &:hover {
       border: $hoverBorder;
     }
@@ -16,5 +19,10 @@
   &_alt-active {
     @include mixins.button(white, $primaryLight, $primaryLight);
     border: $hoverBorder;
+    font-weight: 400;
   }
+}
+
+.button__disabled {
+  opacity: 0.3;
 }
