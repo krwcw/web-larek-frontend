@@ -1,3 +1,4 @@
+import './scss/styles.scss';
 import { Api } from './components/base/api';
 import { EventEmitter } from './components/base/events';
 import { Basket } from './components/Basket';
@@ -6,7 +7,6 @@ import { ContactsForm } from './components/ContactsForm';
 import { Modal } from './components/Modal';
 import { OrderForm } from './components/OrderForm';
 import { ProductPreview } from './components/ProductPreview';
-import './scss/styles.scss';
 import { IBasketItem, IErrorResponse, IOrderResponse, IProduct, IProductsResponse } from './types';
 import { API_URL, CDN_URL } from './utils/constants';
 import { cloneTemplate, ensureAllElements, ensureElement } from './utils/utils';
@@ -146,12 +146,12 @@ events.on('order:open', () => {
     basketModal.close();
 });
 
-events.on('order:success', ( total: { total: number }) => {
+events.on('order:success', (data: { total: number }) => {
     const successTemplate = ensureElement<HTMLTemplateElement>('#success');
     const successContent = cloneTemplate(successTemplate);
     
     const description = ensureElement<HTMLElement>('.order-success__description', successContent);
-    description.textContent = `Списано ${total} синапсов`;
+    description.textContent = `Списано ${data.total} синапсов`;
     
     const closeButton = ensureElement<HTMLButtonElement>('.order-success__close', successContent);
     closeButton.addEventListener('click', () => {

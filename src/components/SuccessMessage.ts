@@ -1,4 +1,5 @@
 // components/SuccessMessage.ts
+import { IOrderResponse } from "../types";
 import { ensureElement } from "../utils/utils";
 import { Component } from "./base/components";
 
@@ -15,8 +16,8 @@ export class SuccessMessage extends Component {
         this.closeButton = ensureElement<HTMLButtonElement>('.order-success__close', this.container);
     }
 
-    render(total: number): HTMLElement {
-        this.description.textContent = `Списано ${total} синапсов`;
+    render(response: { total: number }): HTMLElement {
+        this.description.textContent = `Списано ${response.total} синапсов`;
         return this.container;
     }
 
