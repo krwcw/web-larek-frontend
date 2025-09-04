@@ -97,7 +97,9 @@ events.on('order:open', () => {
     
     const orderForm = new OrderForm(orderContent);
     orderForm.render();
-    
+
+    orderForm.setPaymentHandler((payment) => {});
+    orderForm.setAddressHandler((address) => {}); 
     orderForm.setSubmitHandler((event) => {
     event.preventDefault();
     const orderValues = orderForm.getValues();
