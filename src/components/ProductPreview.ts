@@ -1,9 +1,7 @@
-// components/ProductPreview.ts
-import { basketItems } from "..";
 import { IProduct } from "../types";
 import { categoryMap } from "../utils/categoryMap";
 import { ensureElement } from "../utils/utils";
-import { Component } from "./base/components";
+import { Component } from "./base/Component";
 
 export class ProductPreview extends Component {
     protected title: HTMLElement;

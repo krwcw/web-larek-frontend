@@ -1,7 +1,5 @@
-// components/SuccessMessage.ts
-import { IOrderResponse } from "../types";
 import { ensureElement } from "../utils/utils";
-import { Component } from "./base/components";
+import { Component } from "./base/Component";
 
 export class SuccessMessage extends Component {
     protected title: HTMLElement;

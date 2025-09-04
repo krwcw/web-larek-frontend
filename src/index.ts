@@ -4,31 +4,31 @@ import { EventEmitter } from './components/base/events';
 import { Basket } from './components/Basket';
 import { Card } from './components/Card';
 import { ContactsForm } from './components/ContactsForm';
-import { Modal } from './components/Modal';
+import { Modal } from './components/base/Modal';
 import { OrderForm } from './components/OrderForm';
 import { ProductPreview } from './components/ProductPreview';
 import { IBasketItem, IErrorResponse, IOrderResponse, IProduct, IProductsResponse } from './types';
 import { API_URL, CDN_URL } from './utils/constants';
 import { cloneTemplate, ensureAllElements, ensureElement } from './utils/utils';
+import { SuccessMessage } from './components/SuccessMessage';
 
 const events = new EventEmitter();
 const api = new Api(API_URL);
 
 let catalog: IProduct[] = [];
-export let basketItems: IBasketItem[] = [];
+let basketItems: IBasketItem[] = [];
 
-const basketList = ensureElement<HTMLElement>('.basket');
 const gallery = ensureElement<HTMLElement>('.gallery');
+
 const modals = ensureAllElements<HTMLElement>('.modal');
-
-const basketButton = ensureElement<HTMLButtonElement>('.header__basket');
-let basketCounter = ensureElement<HTMLElement>('.header__basket-counter');
-
 const previewModal = new Modal(modals[0]);
 const basketModal = new Modal(modals[1]); 
 const orderModal = new Modal(modals[2]);
-const succesModal = new Modal(modals[4]);
+const successModal = new Modal(modals[4]);
 
+const basketCounter = ensureElement<HTMLElement>('.header__basket-counter');
+const basketList = ensureElement<HTMLElement>('.basket');
+const basketButton = ensureElement<HTMLButtonElement>('.header__basket');
 const basket = new Basket(basketList, events)
 
 
@@ -146,23 +146,21 @@ events.on('order:open', () => {
     basketModal.close();
 });
 
-events.on('order:success', (data: { total: number }) => {
+events.on('order:success', (data: { total: number; onClose: () => void }) => {
     const successTemplate = ensureElement<HTMLTemplateElement>('#success');
     const successContent = cloneTemplate(successTemplate);
+    const successMessage = new SuccessMessage(successContent);
     
-    const description = ensureElement<HTMLElement>('.order-success__description', successContent);
-    description.textContent = `Списано ${data.total} синапсов`;
-    
-    const closeButton = ensureElement<HTMLButtonElement>('.order-success__close', successContent);
-    closeButton.addEventListener('click', () => {
-        succesModal.close();
-        orderModal.close();
-        basketItems = [];
-        basketCounter.textContent = '0';
-    });
-    
-    succesModal.setContent(successContent).open();
+    successMessage.render({ total: data.total });
+    successModal.setContent(successContent).open();
     orderModal.close();
+
+    basketItems = [];
+    basketCounter.textContent = '0';
+
+    successMessage.setCloseHandler(() => {
+        successModal.close();
+    });
 });
 
 basketButton.addEventListener('click', () => {

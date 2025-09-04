@@ -1,6 +1,6 @@
 import { IBasketItem  } from "../types";
 import { cloneTemplate, ensureElement } from "../utils/utils";
-import { Component } from "./base/components";
+import { Component } from "./base/Component";
 import { EventEmitter } from "./base/events";
 
 export class Basket extends Component {

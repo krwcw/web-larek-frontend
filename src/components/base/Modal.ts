@@ -1,5 +1,5 @@
-import { ensureElement } from "../utils/utils";
-import { Component } from "./base/components";
+import { ensureElement } from "../../utils/utils";
+import { Component } from "./Component";
 
 export class Modal extends Component {
     protected closeButton: HTMLButtonElement;
