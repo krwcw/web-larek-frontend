@@ -98,14 +98,6 @@ events.on('order:open', () => {
     const orderForm = new OrderForm(orderContent);
     orderForm.render();
     
-    orderForm.setPaymentHandler((payment) => {
-        console.log('Payment method:', payment);
-    });
-
-    orderForm.setAddressHandler((address) => {
-        console.log('Address:', address);
-    });
-    
     orderForm.setSubmitHandler((event) => {
     event.preventDefault();
     const orderValues = orderForm.getValues();
@@ -131,7 +123,6 @@ events.on('order:open', () => {
         
         api.post('/order', orderData)
             .then((response: IOrderResponse) => {
-                console.log('Order success:', response);
                 events.emit('order:success', { total: response.total });
             })
             .catch((error: IErrorResponse) => {
