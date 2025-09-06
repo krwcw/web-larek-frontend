@@ -1,15 +1,10 @@
 export interface IProduct {
+    id: string;
     title: string;
     description?: string;
-    id: number;
     image: string;
     category: string;
     price: number | null;
-}
-
-export interface IBasket {
-    products: IBasketItem[];
-    totalprice: number;
 }
 
 export interface IBasketItem {
@@ -18,28 +13,21 @@ export interface IBasketItem {
 }
 
 export interface IOrder {
-    products: IBasketItem[];
-    total: number;
+    payment: 'online' | 'cash';
     address: string;
     email: string;
     phone: string;
-    payment: 'online' | 'cash';
+    items: string[];
+    total: number;
 }
 
-export type Category = {
-    categoryName: string;
-}
-
-export interface IOrderResponse {
+export interface IOrderResult {
     id: string;
     total: number;
 }
 
-export interface IProductsResponse {
-    total: number;
-    items: IProduct[];
-}
-
-export interface IErrorResponse {
-    error: string;
-}
+export type ApiResponse<T> = {
+    success: boolean;
+    data?: T;
+    error?: string;
+};
