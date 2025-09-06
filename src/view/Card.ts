@@ -53,11 +53,6 @@ export class Card extends View {
 
     // Добавляем метод для установки обработчика клика на всю карточку
     setClickHandler(handler: () => void): void {
-        this.container.addEventListener('click', (event) => {
-            // Предотвращаем срабатывание, если кликнули на кнопку
-            if (!(event.target as HTMLElement).closest('.card__button')) {
-                handler();
-            }
-        });
+    this.container.addEventListener('click', handler);
     }
 }

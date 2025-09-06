@@ -21,8 +21,7 @@ export class AppState {
     async loadProducts(): Promise<IProduct[]> {
         try {
             const response = await this.api.get('/product') as ApiListResponse<IProduct>;
-            
-            // Преобразуем пути к изображениям
+
             this._products = response.items.map(product => ({
                 ...product,
                 image: product.image ? `${CDN_URL}/${product.image}` : product.image

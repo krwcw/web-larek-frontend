@@ -82,6 +82,7 @@ export class App {
                 }
                 this.updateBasketCounter();
                 this.renderProducts();
+                this.modal.close();
             }
         });
     }
