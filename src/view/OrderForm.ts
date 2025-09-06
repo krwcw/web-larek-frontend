@@ -41,7 +41,7 @@ export class OrderForm extends View {
         
         // Проверка адреса
         if (address.length < 5) {
-            errors.push('Адрес должен содержать не менее 5 символов');
+            errors.push('Необходимо указать адрес');
         }
         
         // Проверка способа оплаты
