@@ -1,16 +1,10 @@
-/**
- * Базовый класс представления - отвечает за работу с DOM элементами
- * Содержит общие методы для работы с элементами
- */
-export class View {
+import { ensureElement, ensureAllElements } from '../../utils/utils';
+
+export class Component {
     protected container: HTMLElement;
 
     constructor(container: HTMLElement | string) {
-        if (typeof container === 'string') {
-            this.container = document.querySelector(container) as HTMLElement;
-        } else {
-            this.container = container;
-        }
+        this.container = ensureElement(container);
     }
 
     // Публичный геттер для доступа к контейнеру извне

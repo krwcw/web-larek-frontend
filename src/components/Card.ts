@@ -1,21 +1,22 @@
-import { View } from './View';
+import { Component } from './base/Component';
 import { IProduct } from '../types';
 import { categoryMap } from '../utils/categoryMap';
+import { EventEmitter } from './base/events';
+import { ensureElement } from '../utils/utils';
 
-export class Card extends View {
+export class Card extends Component {
     private title: HTMLElement;
     private price: HTMLElement;
     private image: HTMLImageElement;
     private category: HTMLElement;
     private button: HTMLButtonElement | null;
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, private events: EventEmitter) {
         super(container);
-        this.title = this.container.querySelector('.card__title') as HTMLElement;
-        this.price = this.container.querySelector('.card__price') as HTMLElement;
-        this.image = this.container.querySelector('.card__image') as HTMLImageElement;
-        this.category = this.container.querySelector('.card__category') as HTMLElement;
-        this.button = this.container.querySelector('.card__button');
+        this.title = ensureElement<HTMLElement>('.card__title', this.container);
+        this.price = ensureElement<HTMLElement>('.card__price', this.container);
+        this.image = ensureElement<HTMLImageElement>('.card__image', this.container);
+        this.category = ensureElement<HTMLElement>('.card__category', this.container);
     }
 
     render(product: IProduct, inBasket: boolean): void {
@@ -40,19 +41,24 @@ export class Card extends View {
         
         const categoryClass = categoryMap[product.category] || 'other';
         this.category.className = `card__category card__category_${categoryClass}`;
-    }
 
-    setButtonHandler(handler: (isAdding: boolean) => void): void {
+        // Установка обработчиков
         if (this.button) {
             this.button.addEventListener('click', () => {
-                const isAdding = this.button.textContent === 'В корзину';
-                handler(isAdding);
+                if (inBasket) {
+                    this.events.emit('basket:remove', { productId: product.id });
+                } else {
+                    this.events.emit('basket:add', { product });
+                }
+                this.events.emit('modal:close', {});
             });
         }
-    }
 
-    // Добавляем метод для установки обработчика клика на всю карточку
-    setClickHandler(handler: () => void): void {
-    this.container.addEventListener('click', handler);
+        // Обработчик клика по карточке
+        this.container.addEventListener('click', (event) => {
+            if (!this.button || !(event.target as Element).closest('.card__button')) {
+                this.events.emit('card:select', { product });
+            }
+        });
     }
 }

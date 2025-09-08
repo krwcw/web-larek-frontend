@@ -17,6 +17,9 @@ export interface IOrder {
     address: string;
     email: string;
     phone: string;
+}
+
+export interface IOrderRequest extends IOrder {
     items: string[];
     total: number;
 }

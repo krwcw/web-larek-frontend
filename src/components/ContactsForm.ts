@@ -1,18 +1,22 @@
-import { View } from './View';
+import { Component } from './base/Component';
 import { IOrder } from '../types';
+import { EventEmitter } from './base/events';
+import { ensureElement } from '../utils/utils';
 
-export class ContactsForm extends View {
+export class ContactsForm extends Component {
     private emailInput: HTMLInputElement;
     private phoneInput: HTMLInputElement;
     private submitButton: HTMLButtonElement;
     private errorsContainer: HTMLElement;
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, private events: EventEmitter) {
         super(container);
-        this.emailInput = this.container.querySelector('input[name="email"]') as HTMLInputElement;
-        this.phoneInput = this.container.querySelector('input[name="phone"]') as HTMLInputElement;
-        this.submitButton = this.container.querySelector('button[type="submit"]') as HTMLButtonElement;
-        this.errorsContainer = this.container.querySelector('.form__errors') as HTMLElement;
+        this.emailInput = ensureElement<HTMLInputElement>('input[name="email"]', this.container);
+        this.phoneInput = ensureElement<HTMLInputElement>('input[name="phone"]', this.container);
+        this.submitButton = ensureElement<HTMLButtonElement>('button[type="submit"]', this.container);
+        this.errorsContainer = ensureElement<HTMLElement>('.form__errors', this.container);
+
+        this.setHandlers();
     }
 
     // Отрисовать форму контактов
@@ -21,9 +25,8 @@ export class ContactsForm extends View {
         if (order.phone) this.phoneInput.value = order.phone;
         
         // Сбрасываем ошибки при открытии формы
-        this.validateForm();
         this.hideErrors();
-
+        this.validateForm();
     }
 
     // Валидация формы
@@ -57,7 +60,7 @@ export class ContactsForm extends View {
     }
 
     // Установить обработчики событий
-    setHandlers(): void {
+    private setHandlers(): void {
         // Маска для телефона с ограничением длины
         this.phoneInput.addEventListener('input', (e) => {
             const input = e.target as HTMLInputElement;
@@ -92,24 +95,22 @@ export class ContactsForm extends View {
         // Валидация при вводе
         this.emailInput.addEventListener('input', () => this.validateForm());
         this.phoneInput.addEventListener('input', () => this.validateForm());
+
+        // Обработчик отправки формы
+        this.container.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (this.validateForm()) {
+                this.events.emit('order:submit:step2', this.getFormData());
+            }
+        });
     }
 
     // Получить данные формы
     getFormData(): Partial<IOrder> {
         return {
             email: this.emailInput.value.trim(),
-            phone: this.phoneInput.value.replace(/\D/g, '') // Сохраняем только цифры
+            phone: this.phoneInput.value.replace(/\D/g, '')
         };
-    }
-
-    // Установить обработчик отправки формы
-    setSubmitHandler(handler: (event: SubmitEvent) => void): void {
-        this.container.addEventListener('submit', (event) => {
-            event.preventDefault();
-            if (this.validateForm()) {
-                handler(event);
-            }
-        });
     }
 
     // Показать ошибки

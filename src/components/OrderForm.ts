@@ -1,18 +1,22 @@
-import { View } from './View';
+import { Component } from './base/Component';
 import { IOrder } from '../types';
+import { EventEmitter } from './base/events';
+import { ensureElement, ensureAllElements } from '../utils/utils';
 
-export class OrderForm extends View {
-    private paymentButtons: NodeListOf<HTMLButtonElement>;
+export class OrderForm extends Component {
+    private paymentButtons: HTMLButtonElement[];
     private addressInput: HTMLInputElement;
     private submitButton: HTMLButtonElement;
     private errorsContainer: HTMLElement;
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, private events: EventEmitter) {
         super(container);
-        this.paymentButtons = this.container.querySelectorAll('.button_alt');
-        this.addressInput = this.container.querySelector('input[name="address"]') as HTMLInputElement;
-        this.submitButton = this.container.querySelector('button[type="submit"]') as HTMLButtonElement;
-        this.errorsContainer = this.container.querySelector('.form__errors') as HTMLElement;
+        this.paymentButtons = ensureAllElements<HTMLButtonElement>('.button_alt', this.container);
+        this.addressInput = ensureElement<HTMLInputElement>('input[name="address"]', this.container);
+        this.submitButton = ensureElement<HTMLButtonElement>('button[type="submit"]', this.container);
+        this.errorsContainer = ensureElement<HTMLElement>('.form__errors', this.container);
+
+        this.setHandlers();
     }
 
     // Отрисовать форму заказа
@@ -29,9 +33,8 @@ export class OrderForm extends View {
         }
         
         // Сбрасываем ошибки при открытии формы
-        this.validateForm();
         this.hideErrors();
-
+        this.validateForm();
     }
 
     // Валидация формы
@@ -41,7 +44,7 @@ export class OrderForm extends View {
         
         // Проверка адреса
         if (address.length < 5) {
-            errors.push('Необходимо указать адрес');
+            errors.push('Адрес должен содержать не менее 5 символов');
         }
         
         // Проверка способа оплаты
@@ -66,7 +69,7 @@ export class OrderForm extends View {
     }
 
     // Установить обработчики событий
-    setHandlers(): void {
+    private setHandlers(): void {
         // Обработчики способов оплаты
         this.paymentButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -85,6 +88,14 @@ export class OrderForm extends View {
         this.addressInput.addEventListener('input', () => {
             this.validateForm();
         });
+
+        // Обработчик отправки формы
+        this.container.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (this.validateForm()) {
+                this.events.emit('order:submit:step1', this.getFormData());
+            }
+        });
     }
 
     // Получить данные формы
@@ -97,16 +108,6 @@ export class OrderForm extends View {
             payment: selectedPayment,
             address: this.addressInput.value.trim()
         };
-    }
-
-    // Установить обработчик отправки формы
-    setSubmitHandler(handler: (event: SubmitEvent) => void): void {
-        this.container.addEventListener('submit', (event) => {
-            event.preventDefault();
-            if (this.validateForm()) {
-                handler(event);
-            }
-        });
     }
 
     // Показать ошибки

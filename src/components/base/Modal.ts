@@ -1,14 +1,13 @@
-/**
- * Представление модального окна - отвечает за отображение и управление модальными окнами
- */
-import { View } from './View';
+import { EventEmitter } from './events';
+import { ensureElement } from '../../utils/utils';
+import { Component } from './Component';
 
-export class Modal extends View {
+export class Modal extends Component {
     private closeButton: HTMLButtonElement;
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, private events: EventEmitter) {
         super(container);
-        this.closeButton = this.container.querySelector('.modal__close') as HTMLButtonElement;
+        this.closeButton = ensureElement<HTMLButtonElement>('.modal__close', this.container);
         
         this.closeButton.addEventListener('click', () => this.close());
         this.container.addEventListener('click', (event) => {
@@ -16,6 +15,9 @@ export class Modal extends View {
                 this.close();
             }
         });
+
+        // Подписка на события закрытия
+        events.on('modal:close', this.close.bind(this));
     }
 
     // Открыть модальное окно
@@ -30,7 +32,7 @@ export class Modal extends View {
 
     // Установить содержимое
     setContent(content: HTMLElement): void {
-        const contentContainer = this.container.querySelector('.modal__content');
+        const contentContainer = ensureElement<HTMLElement>('.modal__content', this.container);
         contentContainer.innerHTML = '';
         contentContainer.appendChild(content);
     }
