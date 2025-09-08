@@ -3,7 +3,13 @@ import { IBasketItem } from '../types';
 import { EventEmitter } from './base/events';
 import { ensureElement, cloneTemplate } from '../utils/utils';
 
-export class Basket extends Component {
+interface IBasket {
+    list: HTMLUListElement;
+    total: HTMLElement;
+    button: HTMLButtonElement;
+}
+
+export class Basket extends Component<IBasket> {
     private list: HTMLUListElement;
     private total: HTMLElement;
     private button: HTMLButtonElement;

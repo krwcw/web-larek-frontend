@@ -2,38 +2,43 @@ import { EventEmitter } from './events';
 import { ensureElement } from '../../utils/utils';
 import { Component } from './Component';
 
-export class Modal extends Component {
-    private closeButton: HTMLButtonElement;
+interface IModal {
+    content: HTMLElement;
+}
+
+export class Modal extends Component<IModal> {
+    protected _closeButton: HTMLButtonElement;
+    protected _content: HTMLElement;
 
     constructor(container: HTMLElement, private events: EventEmitter) {
         super(container);
-        this.closeButton = ensureElement<HTMLButtonElement>('.modal__close', this.container);
-        
-        this.closeButton.addEventListener('click', () => this.close());
-        this.container.addEventListener('click', (event) => {
-            if (event.target === this.container) {
-                this.close();
-            }
-        });
 
-        // Подписка на события закрытия
-        events.on('modal:close', this.close.bind(this));
+        this._closeButton = ensureElement<HTMLButtonElement>('.modal__close', container);
+        this._content = ensureElement<HTMLElement>('.modal__content', container);
+
+        this._closeButton.addEventListener('click', this.close.bind(this));
+        this.container.addEventListener('click', this.close.bind(this));
+        this._content.addEventListener('click', (event) => event.stopPropagation());
     }
 
-    // Открыть модальное окно
-    open(): void {
+    set content(value: HTMLElement) {
+        this._content.replaceChildren(value);
+    }
+
+    open() {
         this.container.classList.add('modal_active');
+        this.events.emit('modal:open');
     }
 
-    // Закрыть модальное окно
-    close(): void {
+    close() {
         this.container.classList.remove('modal_active');
+        this.content = null;
+        this.events.emit('modal:close');
     }
 
-    // Установить содержимое
-    setContent(content: HTMLElement): void {
-        const contentContainer = ensureElement<HTMLElement>('.modal__content', this.container);
-        contentContainer.innerHTML = '';
-        contentContainer.appendChild(content);
+    render(data: IModal): HTMLElement {
+        super.render(data);
+        this.open();
+        return this.container;
     }
 }

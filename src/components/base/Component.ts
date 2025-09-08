@@ -1,49 +1,56 @@
-import { ensureElement, ensureAllElements } from '../../utils/utils';
-
-export class Component {
-    protected container: HTMLElement;
-
-    constructor(container: HTMLElement | string) {
-        this.container = ensureElement(container);
+/**
+ * Базовый компонент
+ */
+export abstract class Component<T> {
+    protected constructor(protected readonly container: HTMLElement) {
+        // Учитывайте что код в конструкторе исполняется ДО всех объявлений в дочернем классе
     }
 
-    // Публичный геттер для доступа к контейнеру извне
-    get element(): HTMLElement {
-        return this.container;
+    // Инструментарий для работы с DOM в дочерних компонентах
+
+    // Переключить класс
+    toggleClass(element: HTMLElement, className: string, force?: boolean) {
+        element.classList.toggle(className, force);
     }
 
-    // Установить текст элемента
-    setText(element: HTMLElement, text: string): void {
-        element.textContent = text;
-    }
-
-    // Установить изображение
-    setImage(element: HTMLImageElement, src: string, alt: string): void {
-        element.src = src;
-        element.alt = alt;
-    }
-
-    // Установить состояние disabled
-    setDisabled(element: HTMLElement, state: boolean): void {
-        if (state) {
-            element.setAttribute('disabled', 'true');
-        } else {
-            element.removeAttribute('disabled');
+    // Установить текстовое содержимое
+    protected setText(element: HTMLElement, value: unknown) {
+        if (element) {
+            element.textContent = String(value);
         }
     }
 
-    // Переключить класс
-    toggleClass(element: HTMLElement, className: string, state: boolean): void {
-        element.classList.toggle(className, state);
+    // Сменить статус блокировки
+    setDisabled(element: HTMLElement, state: boolean) {
+        if (element) {
+            if (state) element.setAttribute('disabled', 'disabled');
+            else element.removeAttribute('disabled');
+        }
     }
 
-    // Скрыть элемент
-    hide(element: HTMLElement): void {
+    // Скрыть
+    protected setHidden(element: HTMLElement) {
         element.style.display = 'none';
     }
 
-    // Показать элемент
-    show(element: HTMLElement): void {
-        element.style.display = '';
+    // Показать
+    protected setVisible(element: HTMLElement) {
+        element.style.removeProperty('display');
+    }
+
+    // Установить изображение с алтернативным текстом
+    protected setImage(element: HTMLImageElement, src: string, alt?: string) {
+        if (element) {
+            element.src = src;
+            if (alt) {
+                element.alt = alt;
+            }
+        }
+    }
+
+    // Вернуть корневой DOM-элемент
+    render(data?: Partial<T>): HTMLElement {
+        Object.assign(this as object, data ?? {});
+        return this.container;
     }
 }

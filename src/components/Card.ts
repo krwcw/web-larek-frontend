@@ -4,7 +4,15 @@ import { categoryMap } from '../utils/categoryMap';
 import { EventEmitter } from './base/events';
 import { ensureElement } from '../utils/utils';
 
-export class Card extends Component {
+interface ICard {
+    title: HTMLElement;
+    price: HTMLElement;
+    image: HTMLImageElement;
+    category: HTMLElement;
+    button: HTMLButtonElement | null;
+}
+
+export class Card extends Component<ICard> {
     private title: HTMLElement;
     private price: HTMLElement;
     private image: HTMLImageElement;

@@ -55,7 +55,6 @@ export class App {
     // Инициализация обработчиков событий
     private initEventHandlers(): void {
    
-        const basketButton = ensureElement<HTMLButtonElement>('.header__basket');
         basketButton.addEventListener('click', () => {
             this.openBasket();
         });
