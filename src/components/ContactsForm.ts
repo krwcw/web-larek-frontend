@@ -78,24 +78,34 @@ export class ContactsForm extends Form<IOrder> {
         }
     }
 
-    get email(): Partial<IOrder> {
-        return this._emailInput.value.trim()
+    // Геттер для email
+    get email(): string {
+        return this._emailInput.value.trim();
     }
 
-    get phone(): Partial<IOrder> {
-        return this._phoneInput.value.replace(/\D/g, '')
+    // Геттер для phone
+    get phone(): string {
+        return this._phoneInput.value.replace(/\D/g, '');
     }
 
-    render(data: Partial<IOrder> & IForm): HTMLElement {
+    // Метод для получения данных формы
+    getFormData(): Partial<IOrder> {
+        return {
+            email: this.email,
+            phone: this.phone
+        };
+    }
+
+    render(state: Partial<IOrder> & { valid: boolean; errors: string }): HTMLFormElement {
         // Вызываем render базового класса
-        super.render(data);
+        super.render(state);
 
         // Устанавливаем значения в DOM элементы
-        if (data.email !== undefined) {
-            this._emailInput.value = data.email;
+        if (state.email !== undefined) {
+            this._emailInput.value = state.email;
         }
-        if (data.phone !== undefined) {
-            this._phoneInput.value = data.phone;
+        if (state.phone !== undefined) {
+            this._phoneInput.value = state.phone;
         }
 
         // Валидируем форму

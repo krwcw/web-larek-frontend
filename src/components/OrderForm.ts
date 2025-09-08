@@ -63,20 +63,24 @@ export class OrderForm extends Form<IOrder> {
         }
     }
 
-    get payment(): Partial<IOrder> {
+    get payment(): string {
         const selectedPayment = Array.from(this._paymentButtons).find(btn => 
             btn.classList.contains('button_active')
         )?.name as 'online' | 'cash';
-        
-        return {
-            payment: selectedPayment
-        }
+
+        return selectedPayment
     }
 
-    get address(): Partial<IOrder> {
+    get address(): string {
         return this._addressInput.value.trim()
     };
 
+    getFormData(): Partial<IOrder> {
+        return {
+            payment: selectedPayment,
+            address: this.address
+        };
+    }
 
     render(data: Partial<IOrder>): HTMLElement {
         super.render(data);
