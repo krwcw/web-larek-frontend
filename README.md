@@ -118,7 +118,8 @@ interface IOrder {
 
 Классы:
 
-`View` - базовый класс для всех представлений/
+`View` - базовый класс для всех представлений
+
 Содержит общие методы: 
 ```
 setText(), setImage(), setDisabled(), toggleClass()
@@ -150,8 +151,11 @@ setText(), setImage(), setDisabled(), toggleClass()
 Загрузка товаров: `App` вызывает `model.loadProducts()`, затем обновляет представление
 
 Действия пользователя:
+
 Клик по товару -> `Card` -> `App.openProductPreview()`
+
 Добавление в корзину -> `App` -> `model.addToBasket()`
+
 Оформление заказа -> `OrderForm` -> `App.processOrder()`
 
 Обновление UI: При изменении данных в модели, презентер обновляет представления
