@@ -1,46 +1,41 @@
-import { Component } from './base/Component';
-import { IOrder } from '../types';
 import { EventEmitter } from './base/events';
 import { ensureElement, ensureAllElements } from '../utils/utils';
+import { IOrder } from '../types';
+import { Form } from './base/Form';
 
-export class OrderForm extends Component {
-    private paymentButtons: HTMLButtonElement[];
-    private addressInput: HTMLInputElement;
-    private submitButton: HTMLButtonElement;
-    private errorsContainer: HTMLElement;
+export class OrderForm extends Form<IOrder> {
+    protected _paymentButtons: HTMLButtonElement[];
+    protected _addressInput: HTMLInputElement;
 
-    constructor(container: HTMLElement, private events: EventEmitter) {
-        super(container);
-        this.paymentButtons = ensureAllElements<HTMLButtonElement>('.button_alt', this.container);
-        this.addressInput = ensureElement<HTMLInputElement>('input[name="address"]', this.container);
-        this.submitButton = ensureElement<HTMLButtonElement>('button[type="submit"]', this.container);
-        this.errorsContainer = ensureElement<HTMLElement>('.form__errors', this.container);
+    constructor(container: HTMLFormElement, events: EventEmitter) {
+        super(container, events);
 
-        this.setHandlers();
-    }
+        this._paymentButtons = ensureAllElements<HTMLButtonElement>('.button_alt', container);
+        this._addressInput = ensureElement<HTMLInputElement>('input[name="address"]', container);
 
-    // Отрисовать форму заказа
-    render(order: Partial<IOrder>): void {
-        // Установить выбранный способ оплаты
-        this.paymentButtons.forEach(button => {
-            this.toggleClass(button, 'button_active', button.name === order.payment);
-            this.toggleClass(button, 'button_alt-active', button.name === order.payment);
+        // Обработчики способов оплаты
+        this._paymentButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                this._paymentButtons.forEach(btn => {
+                    btn.classList.remove('button_active');
+                    btn.classList.remove('button_alt-active');
+                });
+                
+                button.classList.add('button_active');
+                button.classList.add('button_alt-active');
+                this.validateForm();
+            });
         });
         
-        // Установить адрес
-        if (order.address) {
-            this.addressInput.value = order.address;
-        }
-        
-        // Сбрасываем ошибки при открытии формы
-        this.hideErrors();
-        this.validateForm();
+        // Обработчик изменения адреса
+        this._addressInput.addEventListener('input', () => {
+            this.validateForm();
+        });
     }
 
-    // Валидация формы
     validateForm(): boolean {
         const errors: string[] = [];
-        const address = this.addressInput.value.trim();
+        const address = this._addressInput.value.trim();
         
         // Проверка адреса
         if (address.length < 5) {
@@ -48,7 +43,7 @@ export class OrderForm extends Component {
         }
         
         // Проверка способа оплаты
-        const paymentSelected = Array.from(this.paymentButtons).some(btn => 
+        const paymentSelected = Array.from(this._paymentButtons).some(btn => 
             btn.classList.contains('button_active')
         );
         
@@ -58,67 +53,47 @@ export class OrderForm extends Component {
         
         // Показать ошибки
         if (errors.length > 0) {
-            this.showErrors(errors);
-            this.setDisabled(this.submitButton, true);
+            this.errors = errors.join('. ');
+            this.valid = false;
             return false;
         } else {
-            this.hideErrors();
-            this.setDisabled(this.submitButton, false);
+            this.errors = '';
+            this.valid = true;
             return true;
         }
     }
 
-    // Установить обработчики событий
-    private setHandlers(): void {
-        // Обработчики способов оплаты
-        this.paymentButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                this.paymentButtons.forEach(btn => {
-                    this.toggleClass(btn, 'button_active', false);
-                    this.toggleClass(btn, 'button_alt-active', false);
-                });
-                
-                this.toggleClass(button, 'button_active', true);
-                this.toggleClass(button, 'button_alt-active', true);
-                this.validateForm();
-            });
-        });
-        
-        // Обработчик изменения адреса
-        this.addressInput.addEventListener('input', () => {
-            this.validateForm();
-        });
-
-        // Обработчик отправки формы
-        this.container.addEventListener('submit', (event) => {
-            event.preventDefault();
-            if (this.validateForm()) {
-                this.events.emit('order:submit:step1', this.getFormData());
-            }
-        });
-    }
-
-    // Получить данные формы
-    getFormData(): Partial<IOrder> {
-        const selectedPayment = Array.from(this.paymentButtons).find(btn => 
+    get payment(): Partial<IOrder> {
+        const selectedPayment = Array.from(this._paymentButtons).find(btn => 
             btn.classList.contains('button_active')
         )?.name as 'online' | 'cash';
         
         return {
-            payment: selectedPayment,
-            address: this.addressInput.value.trim()
-        };
+            payment: selectedPayment
+        }
     }
 
-    // Показать ошибки
-    private showErrors(errors: string[]): void {
-        this.errorsContainer.textContent = errors.join('. ');
-        this.show(this.errorsContainer);
-    }
+    get address(): Partial<IOrder> {
+        return this._addressInput.value.trim()
+    };
 
-    // Скрыть ошибки
-    private hideErrors(): void {
-        this.errorsContainer.textContent = '';
-        this.hide(this.errorsContainer);
+
+    render(data: Partial<IOrder>): HTMLElement {
+        super.render(data);
+        
+        // Установить выбранный способ оплаты
+        this._paymentButtons.forEach(button => {
+            const isActive = button.name === data.payment;
+            button.classList.toggle('button_active', isActive);
+            button.classList.toggle('button_alt-active', isActive);
+        });
+        
+        // Установить адрес
+        if (data.address) {
+            this._addressInput.value = data.address;
+        }
+        
+        this.validateForm();
+        return this.container;
     }
 }

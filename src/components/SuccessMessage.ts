@@ -1,26 +1,45 @@
 import { Component } from './base/Component';
-import { IOrderResult } from '../types';
 import { EventEmitter } from './base/events';
 import { ensureElement } from '../utils/utils';
+import { IOrderResult } from '../types';
 
-export class SuccessMessage extends Component {
-    private title: HTMLElement;
-    private description: HTMLElement;
-    private closeButton: HTMLButtonElement;
+interface SuccessData extends IOrderResult {
+    onClose: () => void;
+}
 
-    constructor(container: HTMLElement, private events: EventEmitter) {
+export class SuccessMessage extends Component<SuccessData> {
+    protected _title: HTMLElement;
+    protected _description: HTMLElement;
+    protected _closeButton: HTMLButtonElement;
+
+    constructor(container: HTMLElement, protected events: EventEmitter) {
         super(container);
-        this.title = ensureElement<HTMLElement>('.order-success__title', this.container);
-        this.description = ensureElement<HTMLElement>('.order-success__description', this.container);
-        this.closeButton = ensureElement<HTMLButtonElement>('.order-success__close', this.container);
 
-        this.closeButton.addEventListener('click', () => {
-            this.events.emit('modal:close');
+        this._title = ensureElement<HTMLElement>('.order-success__title', container);
+        this._description = ensureElement<HTMLElement>('.order-success__description', container);
+        this._closeButton = ensureElement<HTMLButtonElement>('.order-success__close', container);
+
+        this._closeButton.addEventListener('click', () => {
+            if (this._data.onClose) {
+                this._data.onClose();
+            }
         });
     }
 
-    // Отрисовать сообщение
-    render(result: IOrderResult): void {
-        this.setText(this.description, `Списано ${result.total} синапсов`);
+    set title(value: string) {
+        this.setText(this._title, value);
+    }
+
+    set description(value: string) {
+        this.setText(this._description, value);
+    }
+
+    set onClose(value: () => void) {
+        this._data.onClose = value;
+    }
+
+    render(data: Partial<SuccessData>): HTMLElement {
+        super.render(data);
+        return this.container;
     }
 }

@@ -1,5 +1,5 @@
 import { IProduct, IBasketItem, IOrder, IOrderResult } from '../types';
-import { EventEmitter } from './base/events';
+import { EventEmitter } from '../components/base/events';
 
 export class Model {
     private _products: IProduct[] = [];
@@ -12,11 +12,7 @@ export class Model {
     };
 
     constructor(private events: EventEmitter) {
-        // Подписка на события для изменения состояния
-        events.on('products:set', (data: { products: IProduct[] }) => {
-            this.setProducts(data.products);
-        });
-        
+        // Подписка на события от презентера
         events.on('basket:add', (data: { product: IProduct }) => {
             this.addToBasket(data.product);
         });
@@ -37,31 +33,32 @@ export class Model {
     // Установить продукты
     setProducts(products: IProduct[]): void {
         this._products = products;
-        this.events.emit('products:changed', this._products);
+        this.events.emit('products:changed', { products: this.products });
     }
 
     // Добавить продукт в корзину
     addToBasket(product: IProduct): void {
         this._basket.push(product);
-        this.events.emit('basket:changed', this._basket);
+        this.events.emit('basket:changed', { basket: this.basket });
     }
 
     // Удалить продукт из корзины
     removeFromBasket(productId: string): void {
         this._basket = this._basket.filter(item => item.id !== productId);
-        this.events.emit('basket:changed', this._basket);
+        this.events.emit('basket:changed', { basket: this.basket });
     }
 
     // Очистить корзину
     clearBasket(): void {
         this._basket = [];
-        this.events.emit('basket:changed', this._basket);
+        this.events.emit('basket:changed', { basket: this.basket });
     }
 
     // Обновить данные заказа
     updateOrder(partialOrder: Partial<IOrder>): void {
         Object.assign(this._order, partialOrder);
     }
+
     // Получить продукты из корзины
     getBasketItems(): IBasketItem[] {
         return this._basket.map((product, index) => ({

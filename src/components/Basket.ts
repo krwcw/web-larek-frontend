@@ -1,77 +1,65 @@
 import { Component } from './base/Component';
-import { IBasketItem } from '../types';
 import { EventEmitter } from './base/events';
 import { ensureElement, cloneTemplate } from '../utils/utils';
+import { IBasketItem } from '../types';
 
-interface IBasket {
-    list: HTMLUListElement;
-    total: HTMLElement;
-    button: HTMLButtonElement;
+interface BasketData {
+    items: IBasketItem[];
+    total: number;
 }
 
-export class Basket extends Component<IBasket> {
-    private list: HTMLUListElement;
-    private total: HTMLElement;
-    private button: HTMLButtonElement;
+export class Basket extends Component<BasketData> {
+    protected _list: HTMLElement;
+    protected _total: HTMLElement;
+    protected _button: HTMLButtonElement;
 
-    constructor(container: HTMLElement, private events: EventEmitter) {
+    constructor(container: HTMLElement, protected events: EventEmitter) {
         super(container);
-        this.list = ensureElement<HTMLUListElement>('.basket__list', this.container);
-        this.total = ensureElement<HTMLElement>('.basket__price', this.container);
-        this.button = ensureElement<HTMLButtonElement>('.basket__button', this.container);
+
+        this._list = ensureElement<HTMLElement>('.basket__list', container);
+        this._total = ensureElement<HTMLElement>('.basket__price', container);
+        this._button = ensureElement<HTMLButtonElement>('.basket__button', container);
 
         // Обработчик кнопки оформления заказа
-        this.button.addEventListener('click', () => {
-            this.events.emit('order:open');
+        this._button.addEventListener('click', () => {
+            events.emit('order:open');
         });
     }
 
-    // Отрисовать корзину
-    render(items: IBasketItem[], total: number): void {
-
-        this.list.innerHTML = '';
-        
+    set items(items: IBasketItem[]) {
+        this._list.innerHTML = '';
         items.forEach(item => {
-            const itemElement = this.createBasketItem(item);
-            this.list.appendChild(itemElement);
+            const template = ensureElement<HTMLTemplateElement>('#card-basket');
+            const element = cloneTemplate<HTMLLIElement>(template);
+            
+            const index = ensureElement<HTMLElement>('.basket__item-index', element);
+            const title = ensureElement<HTMLElement>('.card__title', element);
+            const price = ensureElement<HTMLElement>('.card__price', element);
+            const deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete', element);
+            
+            this.setText(index, item.index.toString());
+            this.setText(title, item.product.title);
+            this.setText(price, `${item.product.price} синапсов`);
+            
+            // Обработчик удаления товара
+            deleteButton.addEventListener('click', () => {
+                this.events.emit('basket:remove', { productId: item.product.id });
+            });
+            
+            this._list.appendChild(element);
         });
-        
-        this.setText(this.total, `${total} синапсов`);
-        this.setDisabled(this.button, items.length === 0);
     }
 
-    setDeleteHandler(handler: (productId: string) => void): void {
-        this.list.addEventListener('click', (event) => {
-            const target = event.target as HTMLElement;
-            if (target.classList.contains('basket__item-delete')) {
-                const itemElement = target.closest('.basket__item') as HTMLElement;
-                const productId = itemElement.dataset.id;
-                if (productId) {
-                    handler(productId);
-                }
-            }
-        });
+    set total(value: number) {
+        this.setText(this._total, `${value} синапсов`);
     }
 
-    // Создать элемент корзины
-    private createBasketItem(item: IBasketItem): HTMLLIElement {
-        const template = ensureElement<HTMLTemplateElement>('#card-basket');
-        const element = cloneTemplate<HTMLLIElement>(template);
-        
-        const index = ensureElement<HTMLElement>('.basket__item-index', element);
-        const title = ensureElement<HTMLElement>('.card__title', element);
-        const price = ensureElement<HTMLElement>('.card__price', element);
-        const deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete', element);
-        
-        this.setText(index, item.index.toString());
-        this.setText(title, item.product.title);
-        this.setText(price, `${item.product.price} синапсов`);
-        
-        // Обработчик удаления товара
-        deleteButton.addEventListener('click', () => {
-            this.events.emit('basket:remove', { productId: item.product.id });
-        });
-        
-        return element;
+    set buttonDisabled(value: boolean) {
+        this.setDisabled(this._button, value);
+    }
+
+    render(data: Partial<BasketData>): HTMLElement {
+        super.render(data);
+        return this.container;
     }
 }

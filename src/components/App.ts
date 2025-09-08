@@ -1,21 +1,25 @@
-import { Model } from './Model';
-import { Api } from './base/api';
-import { EventEmitter } from './base/events';
-import { Modal } from './base/Modal';
-import { Card } from './Card';
-import { Basket } from './Basket';
-import { OrderForm } from './OrderForm';
-import { ContactsForm } from './ContactsForm';
-import { SuccessMessage } from './SuccessMessage';
-import { IProduct, IOrder, IOrderResult, IOrderRequest } from '../types';
+import { EventEmitter } from '../components/base/events';
+import { Card } from '../components/Card';
+import { Basket } from '../components/Basket';
+import { OrderForm } from '../components/OrderForm';
+import { ContactsForm } from '../components/ContactsForm';
+import { SuccessMessage } from '../components/SuccessMessage';
+import { Header } from '../components/Header';
+import { IProduct, IOrder, IOrderRequest, IOrderResult } from '../types';
 import { ensureElement, cloneTemplate } from '../utils/utils';
 import { API_URL, CDN_URL } from '../utils/constants';
+import { Modal } from './base/Modal';
+import { Api } from './base/api';
+import { Model } from './Model';
+import { Gallery } from './Gallery';
 
 export class App {
     private events: EventEmitter;
     private api: Api;
     private model: Model;
     private modal: Modal;
+    private header: Header;
+    private gallery: Gallery;
     private productCard: Card;
     private basket: Basket;
     private orderForm: OrderForm;
@@ -26,6 +30,7 @@ export class App {
         this.events = new EventEmitter();
         this.api = new Api(API_URL);
         this.model = new Model(this.events);
+        
         this.initViews();
         this.initEventHandlers();
         this.loadProducts();
@@ -36,17 +41,23 @@ export class App {
         const modalContainer = ensureElement<HTMLElement>('#modal-container');
         this.modal = new Modal(modalContainer, this.events);
         
+        const headerContainer = ensureElement<HTMLElement>('.header');
+        this.header = new Header(headerContainer, this.events);
+        
         const productTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
         this.productCard = new Card(cloneTemplate<HTMLElement>(productTemplate), this.events);
+
+        const galleryContainer = ensureElement<HTMLElement>('.gallery');
+        this.gallery = new Gallery(galleryContainer, this.events);
         
         const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
         this.basket = new Basket(cloneTemplate<HTMLElement>(basketTemplate), this.events);
         
         const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
-        this.orderForm = new OrderForm(cloneTemplate<HTMLElement>(orderTemplate), this.events);
+        this.orderForm = new OrderForm(cloneTemplate<HTMLFormElement>(orderTemplate), this.events);
         
         const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
-        this.contactsForm = new ContactsForm(cloneTemplate<HTMLElement>(contactsTemplate), this.events);
+        this.contactsForm = new ContactsForm(cloneTemplate<HTMLFormElement>(contactsTemplate), this.events);
         
         const successTemplate = ensureElement<HTMLTemplateElement>('#success');
         this.successMessage = new SuccessMessage(cloneTemplate<HTMLElement>(successTemplate), this.events);
@@ -54,55 +65,51 @@ export class App {
 
     // Инициализация обработчиков событий
     private initEventHandlers(): void {
-   
-        basketButton.addEventListener('click', () => {
-            this.openBasket();
-        });
-
-        // Изменение продуктов
+        // События от модели
         this.events.on('products:changed', (data: { products: IProduct[] }) => {
             this.renderProducts(data.products);
         });
 
-        // Изменение корзины
         this.events.on('basket:changed', (data: { basket: IProduct[] }) => {
             this.updateBasketCounter();
             this.renderProducts(this.model.products);
         });
 
-        // Выбор карточки для просмотра
+        // События от представлений
         this.events.on('card:select', (data: { product: IProduct }) => {
             this.openProductPreview(data.product);
         });
 
-        // Добавление в корзину
         this.events.on('basket:add', (data: { product: IProduct }) => {
-            this.events.emit('products:set', { products: this.model.products });
+            this.model.addToBasket(data.product);
         });
 
-        // Удаление из корзины
         this.events.on('basket:remove', (data: { productId: string }) => {
-            this.events.emit('products:set', { products: this.model.products });
+            this.model.removeFromBasket(data.productId);
         });
 
-        // Открытие формы заказа
+        this.events.on('basket:open', () => {
+            this.openBasket();
+        });
+
         this.events.on('order:open', () => {
             this.openOrderForm();
         });
 
-        // Отправка первого шага заказа
-        this.events.on('order:submit:step1', (data: Partial<IOrder>) => {
-            this.processOrderStep1(data);
+        this.events.on('order:submit:step1', (data: { order: Partial<IOrder> }) => {
+            this.processOrderStep1(data.order);
         });
 
-        // Отправка второго шага заказа
-        this.events.on('order:submit:step2', (data: Partial<IOrder>) => {
-            this.processOrderStep2(data);
+        this.events.on('order:submit:step2', (data: { order: Partial<IOrder> }) => {
+            this.processOrderStep2(data.order);
         });
 
-        // Успешное оформление заказа
-        this.events.on('order:success', (result: IOrderResult) => {
-            this.showSuccess(result);
+        this.events.on('order:success', (data: { result: IOrderResult }) => {
+            this.showSuccess(data.result);
+        });
+
+        this.events.on('modal:close', () => {
+            this.modal.close();
         });
     }
 
@@ -110,13 +117,15 @@ export class App {
     private async loadProducts(): Promise<void> {
         try {
             const response = await this.api.get('/product') as { items: IProduct[] };
+            
+            // Преобразуем пути к изображениям
             const products = response.items.map(product => ({
                 ...product,
                 image: product.image ? `${CDN_URL}/${product.image}` : product.image
             }));
-        
+            
             // Устанавливаем продукты в модель
-            this.events.emit('products:set', { products });
+            this.model.setProducts(products);
         } catch (error) {
             console.error('Ошибка загрузки продуктов:', error);
         }
@@ -124,36 +133,39 @@ export class App {
 
     // Отрисовка продуктов
     private renderProducts(products: IProduct[]): void {
-        const gallery = ensureElement<HTMLElement>('.gallery');
-        gallery.innerHTML = '';
-        
         const template = ensureElement<HTMLTemplateElement>('#card-catalog');
+        const items: HTMLElement[] = [];
         
         products.forEach(product => {
             const element = cloneTemplate<HTMLElement>(template);
             const card = new Card(element, this.events);
             
-            card.render(product, this.model.isInBasket(product.id));
-            gallery.appendChild(element);
+            card.render({
+                ...product,
+                isInBasket: this.model.isInBasket(product.id)
+            });
+            
+            items.push(element);
         });
+        
+        this.gallery.render({ items });
     }
+
 
     // Открытие предпросмотра товара
     private openProductPreview(product: IProduct): void {
-        this.productCard.render(product, this.model.isInBasket(product.id));
-        this.modal.setContent(this.productCard.element);
+        this.productCard.render({
+            ...product,
+            isInBasket: this.model.isInBasket(product.id)
+        });
+        
+        this.modal.content = this.productCard.render();
         this.modal.open();
     }
 
     // Обновление счетчика корзины
     private updateBasketCounter(): void {
-        const counter = ensureElement<HTMLElement>('.header__basket-counter');
-        this.setText(counter, this.model.basket.length.toString());
-    }
-
-    // Вспомогательный метод для установки текста
-    private setText(element: HTMLElement, text: string): void {
-        element.textContent = text;
+        this.header.counter = this.model.basket.length;
     }
 
     // Открытие корзины
@@ -161,32 +173,35 @@ export class App {
         const basketItems = this.model.getBasketItems();
         const total = this.model.getBasketTotal();
         
-        this.basket.render(basketItems, total);
-        this.modal.setContent(this.basket.element);
+        this.basket.render({
+            items: basketItems,
+            total: total
+        });
+        
+        this.modal.content = this.basket.render();
         this.modal.open();
     }
 
     // Открытие формы заказа
     private openOrderForm(): void {
-        this.orderForm.render(this.model.order);
-        this.modal.setContent(this.orderForm.element);
-    }
-
+    this.orderForm.render({ ...this.model.order, valid: false, errors: '' });
+    this.modal.content = this.orderForm.container;
+}
     // Обработка первого шага заказа
     private processOrderStep1(data: Partial<IOrder>): void {
-        this.events.emit('order:update', data);
+        this.model.updateOrder(data);
         this.openContactsForm();
     }
 
     // Открытие формы контактов
     private openContactsForm(): void {
-        this.contactsForm.render(this.model.order);
-        this.modal.setContent(this.contactsForm.element);
-    }
+    this.contactsForm.render({ ...this.model.order, valid: false, errors: '' });
+    this.modal.content = this.contactsForm.container;
+}
 
     // Обработка второго шага заказа
     private async processOrderStep2(data: Partial<IOrder>): Promise<void> {
-        this.events.emit('order:update', { partialOrder: data });
+        this.model.updateOrder(data);
         
         try {
             // Собираем полный объект заказа для отправки
@@ -197,7 +212,7 @@ export class App {
             };
 
             const response = await this.api.post('/order', orderRequest) as IOrderResult;
-            this.events.emit('basket:clear', {});
+            this.model.clearBasket();
             this.events.emit('order:success', { result: response });
         } catch (error) {
             console.error('Ошибка оформления заказа:', error);
@@ -206,7 +221,14 @@ export class App {
 
     // Показ успешного оформления заказа
     private showSuccess(result: IOrderResult): void {
-        this.successMessage.render(result);
-        this.modal.setContent(this.successMessage.element);
+        this.successMessage.render({
+            ...result,
+            description: `Списано ${result.total} синапсов`,
+            onClose: () => {
+                this.modal.close();
+            }
+        });
+        
+        this.modal.content = this.successMessage.render();
     }
 }

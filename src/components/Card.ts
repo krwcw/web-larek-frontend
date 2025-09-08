@@ -1,72 +1,100 @@
 import { Component } from './base/Component';
-import { IProduct } from '../types';
+import { ensureElement } from '../utils/utils';
 import { categoryMap } from '../utils/categoryMap';
 import { EventEmitter } from './base/events';
-import { ensureElement } from '../utils/utils';
+import { IProduct } from '../types';
 
-interface ICard {
-    title: HTMLElement;
-    price: HTMLElement;
-    image: HTMLImageElement;
-    category: HTMLElement;
-    button: HTMLButtonElement | null;
+interface CardData extends IProduct {
+    isInBasket: boolean;
 }
 
-export class Card extends Component<ICard> {
-    private title: HTMLElement;
-    private price: HTMLElement;
-    private image: HTMLImageElement;
-    private category: HTMLElement;
-    private button: HTMLButtonElement | null;
+export class Card extends Component<CardData> {
+    protected _title: HTMLElement;
+    protected _price: HTMLElement;
+    protected _image: HTMLImageElement;
+    protected _category: HTMLElement;
+    protected _button: HTMLButtonElement;
 
-    constructor(container: HTMLElement, private events: EventEmitter) {
+    constructor(container: HTMLElement, protected events: EventEmitter) {
         super(container);
-        this.title = ensureElement<HTMLElement>('.card__title', this.container);
-        this.price = ensureElement<HTMLElement>('.card__price', this.container);
-        this.image = ensureElement<HTMLImageElement>('.card__image', this.container);
-        this.category = ensureElement<HTMLElement>('.card__category', this.container);
-    }
 
-    render(product: IProduct, inBasket: boolean): void {
-        this.setText(this.title, product.title);
-        
-        if (product.price === null) {
-            this.setText(this.price, 'Бесценно');
-            if (this.button) {
-                this.setText(this.button, 'Недоступно');
-                this.setDisabled(this.button, true);
-            }
-        } else {
-            this.setText(this.price, `${product.price} синапсов`);
-            if (this.button) {
-                this.setText(this.button, inBasket ? 'Удалить из корзины' : 'В корзину');
-                this.setDisabled(this.button, false);
-            }
-        }
-        
-        this.setImage(this.image, product.image, product.title);
-        this.setText(this.category, product.category);
-        
-        const categoryClass = categoryMap[product.category] || 'other';
-        this.category.className = `card__category card__category_${categoryClass}`;
+        this._title = ensureElement<HTMLElement>('.card__title', container);
+        this._price = ensureElement<HTMLElement>('.card__price', container);
+        this._image = ensureElement<HTMLImageElement>('.card__image', container);
+        this._category = ensureElement<HTMLElement>('.card__category', container);
+        this._button = container.querySelector('.card__button');
 
-        // Установка обработчиков
-        if (this.button) {
-            this.button.addEventListener('click', () => {
-                if (inBasket) {
-                    this.events.emit('basket:remove', { productId: product.id });
+        // Обработчик клика по кнопке
+        if (this._button) {
+            this._button.addEventListener('click', () => {
+                if (this.data.isInBasket) {
+                    events.emit('basket:remove', { productId: this.data.id });
                 } else {
-                    this.events.emit('basket:add', { product });
+                    events.emit('basket:add', { product: this.data });
                 }
-                this.events.emit('modal:close', {});
             });
         }
 
         // Обработчик клика по карточке
-        this.container.addEventListener('click', (event) => {
-            if (!this.button || !(event.target as Element).closest('.card__button')) {
-                this.events.emit('card:select', { product });
+        container.addEventListener('click', (event) => {
+            if (!this._button || !(event.target as Element).closest('.card__button')) {
+                events.emit('card:select', { product: this.data });
             }
         });
+    }
+
+    set title(value: string) {
+        this.setText(this._title, value);
+    }
+
+    set price(value: number | null) {
+        if (value === null) {
+            this.setText(this._price, 'Бесценно');
+            if (this._button) {
+                this.setText(this._button, 'Недоступно');
+                this.setDisabled(this._button, true);
+            }
+        } else {
+            this.setText(this._price, `${value} синапсов`);
+            if (this._button) {
+                this.setDisabled(this._button, false);
+            }
+        }
+    }
+
+    set image(value: string) {
+        this.setImage(this._image, value, this._title.textContent || '');
+    }
+
+    set category(value: string) {
+        this.setText(this._category, value);
+        const categoryClass = categoryMap[value] || 'other';
+        this._category.className = `card__category card__category_${categoryClass}`;
+    }
+
+    set isInBasket(value: boolean) {
+        if (this._button) {
+            this.setText(this._button, value ? 'Удалить из корзины' : 'В корзину');
+        }
+    }
+
+    get data(): CardData {
+        return this.data;
+    }
+
+    set data(value: CardData) {
+        this.data = value;
+    }
+
+    render(data: Partial<CardData>): HTMLElement {
+        this.data = { ...this.data, ...data } as CardData;
+
+        if (data.title) this.title = data.title;
+        if (data.price !== undefined) this.price = data.price;
+        if (data.image) this.image = data.image;
+        if (data.category) this.category = data.category;
+        if (data.isInBasket !== undefined) this.isInBasket = data.isInBasket;
+        
+        return this.container;
     }
 }
