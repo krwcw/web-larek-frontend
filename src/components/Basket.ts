@@ -1,5 +1,5 @@
 import { Component } from './base/Component';
-import { EventEmitter } from './base/events';
+import { EventEmitter, Events } from './base/events';
 import { ensureElement, cloneTemplate } from '../utils/utils';
 import { IBasketItem } from '../types';
 
@@ -20,14 +20,25 @@ export class Basket extends Component<BasketData> {
         this._total = ensureElement<HTMLElement>('.basket__price', container);
         this._button = ensureElement<HTMLButtonElement>('.basket__button', container);
 
-        // Обработчик кнопки оформления заказа
         this._button.addEventListener('click', () => {
-            events.emit('order:open');
+            events.emit(Events.ORDER_OPEN);
         });
     }
 
     set items(items: IBasketItem[]) {
         this._list.innerHTML = '';
+        
+        if (items.length === 0) {
+            const emptyMessage = document.createElement('li');
+            emptyMessage.textContent = 'Корзина пуста';
+            emptyMessage.classList.add('basket__empty');
+            this._list.appendChild(emptyMessage);
+            this.setDisabled(this._button, true);
+            return;
+        }
+
+        this.setDisabled(this._button, false);
+
         items.forEach(item => {
             const template = ensureElement<HTMLTemplateElement>('#card-basket');
             const element = cloneTemplate<HTMLLIElement>(template);
@@ -39,11 +50,14 @@ export class Basket extends Component<BasketData> {
             
             this.setText(index, item.index.toString());
             this.setText(title, item.product.title);
-            this.setText(price, `${item.product.price} синапсов`);
             
-            // Обработчик удаления товара
+            const priceText = item.product.price === null 
+                ? 'Бесценно' 
+                : `${item.product.price} синапсов`;
+            this.setText(price, priceText);
+            
             deleteButton.addEventListener('click', () => {
-                this.events.emit('basket:remove', { productId: item.product.id });
+                this.events.emit(Events.BASKET_REMOVE, { productId: item.product.id });
             });
             
             this._list.appendChild(element);
@@ -52,10 +66,6 @@ export class Basket extends Component<BasketData> {
 
     set total(value: number) {
         this.setText(this._total, `${value} синапсов`);
-    }
-
-    set buttonDisabled(value: boolean) {
-        this.setDisabled(this._button, value);
     }
 
     render(data: Partial<BasketData>): HTMLElement {

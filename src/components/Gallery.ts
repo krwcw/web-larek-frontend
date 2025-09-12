@@ -11,7 +11,6 @@ export class Gallery extends Component<GalleryData> {
     }
 
     set items(items: HTMLElement[]) {
-        // Очищаем контейнер перед добавлением новых элементов
         this.container.innerHTML = '';
         
         // Добавляем все элементы в галерею

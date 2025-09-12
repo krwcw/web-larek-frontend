@@ -1,5 +1,5 @@
 import { Component } from './base/Component';
-import { EventEmitter } from './base/events';
+import { EventEmitter, Events } from './base/events';
 import { ensureElement } from '../utils/utils';
 
 interface HeaderData {
@@ -17,7 +17,7 @@ export class Header extends Component<HeaderData> {
         this._basketButton = ensureElement<HTMLButtonElement>('.header__basket', container);
 
         this._basketButton.addEventListener('click', () => {
-            events.emit('basket:open');
+            events.emit(Events.BASKET_OPEN);
         });
     }
 

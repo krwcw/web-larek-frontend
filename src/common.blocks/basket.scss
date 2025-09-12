@@ -6,6 +6,14 @@
   gap: 2rem;
   height: 100%;
 
+  &__empty {
+  color: #FFF;;
+  font-weight: 400;
+  font-size: 1.5rem;
+  opacity: 0.3;
+  list-style-type: none;
+  }
+
   &__list {
     padding: 0;
     margin: 0;

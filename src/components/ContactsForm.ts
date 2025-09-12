@@ -1,6 +1,6 @@
-import { EventEmitter } from './base/events';
+import { EventEmitter, Events } from './base/events';
 import { ensureElement } from '../utils/utils';
-import { Form, IForm } from './base/Form';
+import { Form } from './base/Form';
 import { IOrder } from '../types';
 
 export class ContactsForm extends Form<IOrder> {
@@ -23,16 +23,13 @@ export class ContactsForm extends Form<IOrder> {
                 value = value.substring(0, 11);
             }
             
-            // Форматируем только если есть цифры
             if (value.length > 0) {
-                // Убеждаемся, что номер начинается с 7
                 if (!value.startsWith('7')) {
                     value = '7' + value;
                     if (value.length > 11) value = value.substring(0, 11);
                 }
                 
-                // Форматируем номер
-                let formatted = '+7';
+                let formatted = '7';
                 if (value.length > 1) formatted += ` (${value.substring(1, 4)}`;
                 if (value.length > 4) formatted += `) ${value.substring(4, 7)}`;
                 if (value.length > 7) formatted += `-${value.substring(7, 9)}`;
@@ -45,50 +42,58 @@ export class ContactsForm extends Form<IOrder> {
         });
         
         // Валидация при вводе
-        this._emailInput.addEventListener('input', () => this.validateForm());
-        this._phoneInput.addEventListener('input', () => this.validateForm());
+        this._emailInput.addEventListener('input', () => {
+            this.validateForm();
+        });
+
+        // Обработчик отправки формы
+        this.container.addEventListener('submit', (e: Event) => {
+            e.preventDefault();
+            if (this.validateForm()) {
+                this.events.emit(Events.CONTACTS_SUBMIT);
+            }
+        });
     }
 
     validateForm(): boolean {
         const errors: string[] = [];
-        const email = this._emailInput.value.trim();
-        const phone = this._phoneInput.value.trim();
+        const email = this.email;
+        const phone = this.phone;
         
         // Проверка email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            errors.push('Введите корректный email');
+        if (!email || !emailRegex.test(email)) {
+            errors.push('Необходимо ввести email');
         }
         
         // Проверка телефона
         const phoneDigits = phone.replace(/\D/g, '');
-        if (phoneDigits.length !== 11 || !phoneDigits.startsWith('7')) {
+        if (!phone || phoneDigits.length !== 11 || !phoneDigits.startsWith('+7')) {
             errors.push('Введите телефон в формате +7 (XXX) XXX-XX-XX');
         }
         
-        // Показать ошибки
-        if (errors.length > 0) {
-            this.errors = errors.join('. ');
-            this.valid = false;
-            return false;
-        } else {
-            this.errors = '';
-            this.valid = true;
-            return true;
-        }
+        this.errors = errors.join('. ');
+        this.valid = errors.length === 0;
+        
+        return this.valid;
     }
 
-    // Геттер для email
     get email(): string {
         return this._emailInput.value.trim();
     }
 
-    // Геттер для phone
+    set email(value: string) {
+        this._emailInput.value = value;
+    }
+
     get phone(): string {
         return this._phoneInput.value.replace(/\D/g, '');
     }
 
-    // Метод для получения данных формы
+    set phone(value: string) {
+        this._phoneInput.value = value;
+    }
+
     getFormData(): Partial<IOrder> {
         return {
             email: this.email,
@@ -97,18 +102,15 @@ export class ContactsForm extends Form<IOrder> {
     }
 
     render(state: Partial<IOrder> & { valid: boolean; errors: string }): HTMLFormElement {
-        // Вызываем render базового класса
         super.render(state);
 
-        // Устанавливаем значения в DOM элементы
         if (state.email !== undefined) {
-            this._emailInput.value = state.email;
+            this.email = state.email;
         }
         if (state.phone !== undefined) {
-            this._phoneInput.value = state.phone;
+            this.phone = state.phone;
         }
 
-        // Валидируем форму
         this.validateForm();
 
         return this.container;

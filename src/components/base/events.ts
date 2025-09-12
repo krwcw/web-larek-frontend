@@ -7,6 +7,25 @@ type EmitterEvent = {
     data: unknown
 };
 
+export const Events = {
+  PRODUCTS_CHANGED: 'products:changed',
+  BASKET_CHANGED: 'basket:changed',
+  CARD_SELECT: 'card:select',
+  BASKET_ADD: 'basket:add',
+  BASKET_REMOVE: 'basket:remove',
+  BASKET_OPEN: 'basket:open',
+  ORDER_OPEN: 'order:open',
+  ORDER_SUBMIT: 'order:submit',
+  ORDER_UPDATED: 'order:updated',
+  CONTACTS_SUBMIT: 'contacts:submit',
+  ORDER_SUCCESS: 'order:success',
+  SUCCESS_CLOSE: 'success:close',
+  MODAL_OPEN: 'modal:open',
+  MODAL_CLOSE: 'modal:close'
+} as const;
+
+export type EventType = typeof Events[keyof typeof Events];
+
 export interface IEvents {
     on<T extends object>(event: EventName, callback: (data: T) => void): void;
     emit<T extends object>(event: string, data?: T): void;
@@ -88,4 +107,3 @@ export class EventEmitter implements IEvents {
         };
     }
 }
-

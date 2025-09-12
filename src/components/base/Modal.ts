@@ -9,6 +9,7 @@ interface IModal {
 export class Modal extends Component<IModal> {
     protected _closeButton: HTMLButtonElement;
     protected _content: HTMLElement;
+    private _currentContent: HTMLElement | null = null;
 
     constructor(container: HTMLElement, private events: EventEmitter) {
         super(container);
@@ -22,7 +23,12 @@ export class Modal extends Component<IModal> {
     }
 
     set content(value: HTMLElement) {
+        this._currentContent = value;
         this._content.replaceChildren(value);
+    }
+
+    get content(): HTMLElement | null {
+        return this._currentContent;
     }
 
     open() {
@@ -32,7 +38,8 @@ export class Modal extends Component<IModal> {
 
     close() {
         this.container.classList.remove('modal_active');
-        this.content = null;
+        this._currentContent = null;
+        this._content.innerHTML = '';
         this.events.emit('modal:close');
     }
 
