@@ -13,12 +13,11 @@ export class ContactsForm extends Form<IOrder> {
         this._emailInput = ensureElement<HTMLInputElement>('input[name="email"]', container);
         this._phoneInput = ensureElement<HTMLInputElement>('input[name="phone"]', container);
 
-        // Маска для телефона
+        // установка маски для телефона
         this._phoneInput.addEventListener('input', (e) => {
             const input = e.target as HTMLInputElement;
             let value = input.value.replace(/\D/g, '');
             
-            // Ограничиваем длину до 11 цифр (7XXXXXXXXXX)
             if (value.length > 11) {
                 value = value.substring(0, 11);
             }
@@ -41,12 +40,10 @@ export class ContactsForm extends Form<IOrder> {
             this.validateForm();
         });
         
-        // Валидация при вводе
         this._emailInput.addEventListener('input', () => {
             this.validateForm();
         });
 
-        // Обработчик отправки формы
         this.container.addEventListener('submit', (e: Event) => {
             e.preventDefault();
             if (this.validateForm()) {
@@ -60,13 +57,13 @@ export class ContactsForm extends Form<IOrder> {
         const email = this.email;
         const phone = this.phone;
         
-        // Проверка email
+        // проверка email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!email || !emailRegex.test(email)) {
             errors.push('Необходимо ввести email');
         }
         
-        // Проверка телефона
+        // проверка телефона
         const phoneDigits = phone.replace(/\D/g, '');
         if (!phone || phoneDigits.length !== 11 || !phoneDigits.startsWith('+7')) {
             errors.push('Введите телефон в формате +7 (XXX) XXX-XX-XX');

@@ -14,7 +14,7 @@ export class OrderForm extends Form<IOrder> {
         this._paymentButtons = ensureAllElements<HTMLButtonElement>('.button_alt', container);
         this._addressInput = ensureElement<HTMLInputElement>('input[name="address"]', container);
 
-        // Обработчики способов оплаты
+        // обработчик кнопки способа оплаты
         this._paymentButtons.forEach(button => {
             button.addEventListener('click', () => {
                 this._paymentButtons.forEach(btn => {
@@ -29,12 +29,11 @@ export class OrderForm extends Form<IOrder> {
             });
         });
         
-        // Обработчик изменения адреса
+        // валидация ввода адреса
         this._addressInput.addEventListener('input', () => {
             this.validateForm();
         });
 
-        // Обработчик отправки формы
         this.container.addEventListener('submit', (e: Event) => {
             e.preventDefault();
             if (this.validateForm()) {
@@ -47,12 +46,10 @@ export class OrderForm extends Form<IOrder> {
         const errors: string[] = [];
         const address = this.address;
         
-        // Проверка адреса
         if (!address || address.length < 5) {
             errors.push('Необходимо указать адрес');
         }
         
-        // Проверка способа оплаты
         if (!this.payment) {
             errors.push('Выберите способ оплаты');
         }
