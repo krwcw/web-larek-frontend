@@ -28,11 +28,6 @@ export class SuccessMessage extends Component<SuccessData> {
 
     render(data: Partial<SuccessData>): HTMLElement {
         super.render(data);
-        
-        if (data.description) {
-            this.description = data.description;
-        }
-        
         return this.container;
     }
 }

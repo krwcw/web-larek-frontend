@@ -13,7 +13,6 @@ export class Gallery extends Component<GalleryData> {
     set items(items: HTMLElement[]) {
         this.container.innerHTML = '';
         
-        // Добавляем все элементы в галерею
         items.forEach(item => {
             this.container.appendChild(item);
         });
@@ -21,11 +20,6 @@ export class Gallery extends Component<GalleryData> {
 
     render(data: Partial<GalleryData>): HTMLElement {
         super.render(data);
-        
-        if (data.items) {
-            this.items = data.items;
-        }
-        
         return this.container;
     }
 }

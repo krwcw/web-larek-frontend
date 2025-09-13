@@ -225,7 +225,7 @@ export class App {
     // открытие формы заказов
     private openOrderForm(): void {
         this.orderForm.render({ ...this.model.order, valid: false, errors: '' });
-                this.orderForm.hideErrors();
+        this.orderForm.hideErrors();
 
         this.modal.content = this.orderForm.getContainer();
     }
@@ -233,7 +233,7 @@ export class App {
     // открытие формы контактов
     private openContactsForm(): void {
         this.contactsForm.render({ ...this.model.order, valid: false, errors: '' });
-                this.contactsForm.hideErrors();
+        this.contactsForm.hideErrors();
 
         this.modal.content = this.contactsForm.getContainer();
     }

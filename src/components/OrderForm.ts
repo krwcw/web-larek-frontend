@@ -96,24 +96,7 @@ export class OrderForm extends Form<IOrder> {
     }
 
     render(state: Partial<IOrder> & { valid: boolean; errors: string }): HTMLFormElement {
-        const { payment, address, ...formState } = state;
-        super.render(formState);
-
-        this._paymentButtons.forEach(button => {
-            button.classList.remove('button_active');
-            button.classList.remove('button_alt-active');
-        });
-
-        if (payment !== undefined) {
-            this.payment = payment;
-        } else {
-            this._payment = undefined;
-        }
-        
-        if (address !== undefined) {
-            this.address = address;
-        }
-
+        super.render(state);
         this.validateForm();
         return this.container;
     }

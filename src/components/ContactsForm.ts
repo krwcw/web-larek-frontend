@@ -28,7 +28,7 @@ export class ContactsForm extends Form<IOrder> {
                     if (value.length > 11) value = value.substring(0, 11);
                 }
                 
-                let formatted = '7';
+                let formatted = '+7';
                 if (value.length > 1) formatted += ` (${value.substring(1, 4)}`;
                 if (value.length > 4) formatted += `) ${value.substring(4, 7)}`;
                 if (value.length > 7) formatted += `-${value.substring(7, 9)}`;
@@ -60,12 +60,12 @@ export class ContactsForm extends Form<IOrder> {
         // проверка email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!email || !emailRegex.test(email)) {
-            errors.push('Необходимо ввести email');
+            errors.push('Необходимо ввести корректный email');
         }
         
         // проверка телефона
         const phoneDigits = phone.replace(/\D/g, '');
-        if (!phone || phoneDigits.length !== 11 || !phoneDigits.startsWith('+7')) {
+        if (!phoneDigits || phoneDigits.length !== 11 || !phoneDigits.startsWith('7')) {
             errors.push('Введите телефон в формате +7 (XXX) XXX-XX-XX');
         }
         
@@ -84,7 +84,7 @@ export class ContactsForm extends Form<IOrder> {
     }
 
     get phone(): string {
-        return this._phoneInput.value.replace(/\D/g, '');
+        return this._phoneInput.value;
     }
 
     set phone(value: string) {
@@ -100,16 +100,7 @@ export class ContactsForm extends Form<IOrder> {
 
     render(state: Partial<IOrder> & { valid: boolean; errors: string }): HTMLFormElement {
         super.render(state);
-
-        if (state.email !== undefined) {
-            this.email = state.email;
-        }
-        if (state.phone !== undefined) {
-            this.phone = state.phone;
-        }
-
         this.validateForm();
-
         return this.container;
     }
 }

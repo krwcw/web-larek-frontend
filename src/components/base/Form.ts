@@ -2,7 +2,7 @@ import { ensureElement } from "../../utils/utils";
 import { Component } from "./Component";
 import { EventEmitter } from "./events";
 
-export interface IForm {
+interface IForm {
     valid: boolean;
     errors: string;
 }
