@@ -25,39 +25,37 @@ export class OrderForm extends Form<IOrder> {
                 button.classList.add('button_active');
                 button.classList.add('button_alt-active');
                 this._payment = button.name as 'online' | 'cash';
-                this.validateForm();
+                
+                // Отправляем событие обновления
+                this.events.emit(Events.ORDER_UPDATE, { 
+                    payment: this._payment 
+                });
             });
         });
         
         // валидация ввода адреса
         this._addressInput.addEventListener('input', () => {
-            this.validateForm();
+            this.events.emit(Events.ORDER_UPDATE, { 
+                address: this._addressInput.value 
+            });
         });
 
         this.container.addEventListener('submit', (e: Event) => {
             e.preventDefault();
-            if (this.validateForm()) {
-                this.events.emit(Events.ORDER_SUBMIT);
-            }
+            this.events.emit(Events.ORDER_UPDATE, {
+                payment: this.payment,
+                address: this.address
+            });
+            this.events.emit(Events.ORDER_SUBMIT);
         });
-    }
 
-    validateForm(): boolean {
-        const errors: string[] = [];
-        const address = this.address;
-        
-        if (!address || address.length < 5) {
-            errors.push('Необходимо указать адрес');
-        }
-        
-        if (!this.payment) {
-            errors.push('Выберите способ оплаты');
-        }
-        
-        this.errors = errors.join('. ');
-        this.valid = errors.length === 0;
-        
-        return this.valid;
+        this.events.on(Events.ORDER_ERRORS, (errors: { [field in keyof IOrder]?: string }) => {
+            const errorMessages = [];
+            if (errors.address) errorMessages.push(errors.address);
+            if (errors.payment) errorMessages.push(errors.payment);
+            this.errors = errorMessages.join('. ');
+            this.valid = errorMessages.length === 0;
+        });
     }
 
     get payment(): 'online' | 'cash' | undefined {
@@ -88,16 +86,8 @@ export class OrderForm extends Form<IOrder> {
         this._addressInput.value = value;
     }
 
-    getFormData(): Partial<IOrder> {
-        return {
-            payment: this.payment,
-            address: this.address
-        };
-    }
-
     render(state: Partial<IOrder> & { valid: boolean; errors: string }): HTMLFormElement {
         super.render(state);
-        this.validateForm();
         return this.container;
     }
 }

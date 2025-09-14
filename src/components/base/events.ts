@@ -16,6 +16,8 @@ export const Events = {
   BASKET_OPEN: 'basket:open',
   ORDER_OPEN: 'order:open',
   ORDER_SUBMIT: 'order:submit',
+  ORDER_UPDATE: 'order:update',
+  ORDER_ERRORS: 'order:errors',
   ORDER_UPDATED: 'order:updated',
   CONTACTS_SUBMIT: 'contacts:submit',
   ORDER_SUCCESS: 'order:success',

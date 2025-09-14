@@ -1,10 +1,9 @@
 import { Component } from './base/Component';
 import { EventEmitter, Events } from './base/events';
-import { ensureElement, cloneTemplate } from '../utils/utils';
-import { IBasketItem } from '../types';
+import { ensureElement } from '../utils/utils';
 
 interface BasketData {
-    items: IBasketItem[];
+    items: HTMLElement[];
     total: number;
 }
 
@@ -25,7 +24,7 @@ export class Basket extends Component<BasketData> {
         });
     }
 
-    set items(items: IBasketItem[]) {
+    set items(items: HTMLElement[]) {
         this._list.innerHTML = '';
         
         if (items.length === 0) {
@@ -40,27 +39,7 @@ export class Basket extends Component<BasketData> {
         this.setDisabled(this._button, false);
 
         items.forEach(item => {
-            const template = ensureElement<HTMLTemplateElement>('#card-basket');
-            const element = cloneTemplate<HTMLLIElement>(template);
-            
-            const index = ensureElement<HTMLElement>('.basket__item-index', element);
-            const title = ensureElement<HTMLElement>('.card__title', element);
-            const price = ensureElement<HTMLElement>('.card__price', element);
-            const deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete', element);
-            
-            this.setText(index, item.index.toString());
-            this.setText(title, item.product.title);
-            
-            const priceText = item.product.price === null 
-                ? 'Бесценно' 
-                : `${item.product.price} синапсов`;
-            this.setText(price, priceText);
-            
-            deleteButton.addEventListener('click', () => {
-                this.events.emit(Events.BASKET_REMOVE, { productId: item.product.id });
-            });
-            
-            this._list.appendChild(element);
+            this._list.appendChild(item);
         });
     }
 

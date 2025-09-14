@@ -44,7 +44,38 @@ export class Model {
     // Обновить данные заказа
     updateOrder(partialOrder: Partial<IOrder>): void {
         this._order = { ...this._order, ...partialOrder };
+        const errors = this.validateOrder();
         this.events.emit(Events.ORDER_UPDATED, { order: this._order });
+        this.events.emit(Events.ORDER_ERRORS, errors);
+    }
+
+    // Валидация заказа
+    validateOrder(): { [field in keyof IOrder]?: string } {
+        const errors: { [field in keyof IOrder]?: string } = {};
+        
+        // Валидация адреса
+        if (!this._order.address || this._order.address.length < 5) {
+            errors.address = 'Необходимо указать адрес';
+        }
+        
+        // Валидация способа оплаты
+        if (!this._order.payment) {
+            errors.payment = 'Выберите способ оплаты';
+        }
+        
+        // Валидация email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!this._order.email || !emailRegex.test(this._order.email)) {
+            errors.email = 'Необходимо ввести корректный email';
+        }
+        
+        // Валидация телефона
+        const phoneDigits = this._order.phone?.replace(/\D/g, '');
+        if (!phoneDigits || phoneDigits.length !== 11 || !phoneDigits.startsWith('7')) {
+            errors.phone = 'Введите телефон в формате +7 (XXX) XXX-XX-XX';
+        }
+        
+        return errors;
     }
 
     // Эмиттер успешного заказа

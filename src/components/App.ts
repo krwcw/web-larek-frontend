@@ -12,6 +12,7 @@ import { Modal } from './base/Modal';
 import { Api } from './base/api';
 import { Model } from './Model';
 import { Gallery } from './Gallery';
+import { CardBasket } from './CardBasket';
 
 export class App {
     private events: EventEmitter;
@@ -75,22 +76,7 @@ export class App {
 
         this.events.on(Events.BASKET_CHANGED, (data: { basket: IProduct[] }) => {
             this.updateBasketCounter();
-            if (this.modal.content && this.modal.content.classList.contains('card_full')) {
-                this.modal.close();
-            } else {
             this.renderBasket();
-            this.renderProducts(this.model.products);
-            }
-        });
-
-        this.events.on(Events.ORDER_UPDATED, (data: { order: IOrder }) => {
-            if (this.modal.getContainer().classList.contains('modal_active')) {
-                if (this.modal.content === this.orderForm.getContainer()) {
-                    this.orderForm.render({ ...data.order, valid: false, errors: '' });
-                } else if (this.modal.content === this.contactsForm.getContainer()) {
-                    this.contactsForm.render({ ...data.order, valid: false, errors: '' });
-                }
-            }
         });
 
         this.events.on(Events.ORDER_SUCCESS, (data: { result: IOrderResult }) => {
@@ -109,9 +95,13 @@ export class App {
             this.modal.close();
         });
 
-        this.events.on(Events.BASKET_REMOVE, (data: { productId: string }) => {
+        this.events.on(Events.BASKET_REMOVE, (data: { productId: string, fromPreview?: boolean }) => {
             this.model.removeFromBasket(data.productId);
-            
+            if (data.fromPreview) {
+                this.modal.close();
+            } else {
+                this.renderBasket();
+            }
         });
 
         this.events.on(Events.BASKET_OPEN, () => {
@@ -124,14 +114,16 @@ export class App {
         });
 
         this.events.on(Events.ORDER_SUBMIT, () => {
-            const formData = this.orderForm.getFormData();
-            this.model.updateOrder(formData);
+            this.model.updateOrder(this.model.order);
             this.openContactsForm();
         });
 
         this.events.on(Events.CONTACTS_SUBMIT, () => {
-            const formData = this.contactsForm.getFormData();
-            this.processOrder(formData);
+            this.processOrder(this.model.order);
+        });
+
+        this.events.on(Events.ORDER_UPDATE, (data: Partial<IOrder>) => {
+            this.model.updateOrder(data);
         });
 
         this.events.on(Events.ORDER_SUCCESS, (data: { result: IOrderResult }) => {
@@ -202,6 +194,8 @@ export class App {
         
         this.modal.content = previewElement;
         this.modal.open();
+
+        this.productCard = previewCard
     }
 
     // обновление количества товаров в корзине
@@ -214,8 +208,21 @@ export class App {
         const basketItems = this.model.getBasketItems();
         const total = this.model.getBasketTotal();
 
+        const basketElements = basketItems.map(item => {
+            const template = ensureElement<HTMLTemplateElement>('#card-basket');
+            const element = cloneTemplate<HTMLElement>(template);
+            const cardBasket = new CardBasket(element, this.events);
+            
+            cardBasket.render({
+                product: item.product,
+                index: item.index
+            });
+            
+            return element;
+        });
+
         this.basket.render({
-            items: basketItems,
+            items: basketElements,
             total: total
         });
         

@@ -13,7 +13,6 @@ export class ContactsForm extends Form<IOrder> {
         this._emailInput = ensureElement<HTMLInputElement>('input[name="email"]', container);
         this._phoneInput = ensureElement<HTMLInputElement>('input[name="phone"]', container);
 
-        // установка маски для телефона
         this._phoneInput.addEventListener('input', (e) => {
             const input = e.target as HTMLInputElement;
             let value = input.value.replace(/\D/g, '');
@@ -36,71 +35,48 @@ export class ContactsForm extends Form<IOrder> {
                 
                 input.value = formatted;
             }
-            
-            this.validateForm();
         });
-        
+
         this._emailInput.addEventListener('input', () => {
-            this.validateForm();
+            this.events.emit(Events.ORDER_UPDATE, { 
+                email: this._emailInput.value 
+            });
+        });
+
+        this._phoneInput.addEventListener('input', () => {
+            this.events.emit(Events.ORDER_UPDATE, { 
+                phone: this._phoneInput.value 
+            });
         });
 
         this.container.addEventListener('submit', (e: Event) => {
             e.preventDefault();
-            if (this.validateForm()) {
-                this.events.emit(Events.CONTACTS_SUBMIT);
-            }
+            this.events.emit(Events.ORDER_UPDATE, {
+                email: this.email,
+                phone: this.phone
+            });
+            this.events.emit(Events.CONTACTS_SUBMIT);
         });
-    }
 
-    validateForm(): boolean {
-        const errors: string[] = [];
-        const email = this.email;
-        const phone = this.phone;
-        
-        // проверка email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!email || !emailRegex.test(email)) {
-            errors.push('Необходимо ввести корректный email');
-        }
-        
-        // проверка телефона
-        const phoneDigits = phone.replace(/\D/g, '');
-        if (!phoneDigits || phoneDigits.length !== 11 || !phoneDigits.startsWith('7')) {
-            errors.push('Введите телефон в формате +7 (XXX) XXX-XX-XX');
-        }
-        
-        this.errors = errors.join('. ');
-        this.valid = errors.length === 0;
-        
-        return this.valid;
-    }
-
-    get email(): string {
-        return this._emailInput.value.trim();
+        this.events.on(Events.ORDER_ERRORS, (errors: { [field in keyof IOrder]?: string }) => {
+            const errorMessages = [];
+            if (errors.email) errorMessages.push(errors.email);
+            if (errors.phone) errorMessages.push(errors.phone);
+            this.errors = errorMessages.join('. ');
+            this.valid = errorMessages.length === 0;
+        });
     }
 
     set email(value: string) {
         this._emailInput.value = value;
     }
 
-    get phone(): string {
-        return this._phoneInput.value;
-    }
-
     set phone(value: string) {
         this._phoneInput.value = value;
     }
 
-    getFormData(): Partial<IOrder> {
-        return {
-            email: this.email,
-            phone: this.phone
-        };
-    }
-
     render(state: Partial<IOrder> & { valid: boolean; errors: string }): HTMLFormElement {
         super.render(state);
-        this.validateForm();
         return this.container;
     }
 }

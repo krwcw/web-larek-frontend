@@ -5,51 +5,54 @@ import { EventEmitter, Events } from './base/events';
 import { IProduct } from '../types';
 
 interface ICardData extends IProduct {
-  isInBasket: boolean;
+    isInBasket: boolean;
 }
 
 export class Card extends Component<ICardData> {
-  protected _title: HTMLElement;
-  protected _price: HTMLElement;
-  protected _image: HTMLImageElement;
-  protected _category: HTMLElement;
-  protected _button: HTMLButtonElement | null;
-  protected _description: HTMLElement | null;
+    protected _title: HTMLElement;
+    protected _price: HTMLElement;
+    protected _image: HTMLImageElement;
+    protected _category: HTMLElement;
+    protected _button: HTMLButtonElement | null;
+    protected _description: HTMLElement | null;
   
-  private _product: IProduct;
+    private _product: IProduct;
 
-  constructor(container: HTMLElement, protected events: EventEmitter) {
-    super(container);
+    constructor(container: HTMLElement, protected events: EventEmitter) {
+        super(container);
 
-    this._title = ensureElement<HTMLElement>('.card__title', container);
-    this._price = ensureElement<HTMLElement>('.card__price', container);
-    this._image = ensureElement<HTMLImageElement>('.card__image', container);
-    this._category = ensureElement<HTMLElement>('.card__category', container);
+        this._title = ensureElement<HTMLElement>('.card__title', container);
+        this._price = ensureElement<HTMLElement>('.card__price', container);
+        this._image = ensureElement<HTMLImageElement>('.card__image', container);
+        this._category = ensureElement<HTMLElement>('.card__category', container);
     
-    this._button = container.querySelector('.card__button');
-    this._description = container.querySelector('.card__text');
+        this._button = container.querySelector('.card__button');
+        this._description = container.querySelector('.card__text');
 
-    if (this.container.classList.contains('gallery__item')) {
-      container.addEventListener('click', () => {
-        if (this._product) {
-          events.emit(Events.CARD_SELECT, { product: this._product });
+        if (this.container.classList.contains('gallery__item')) {
+            container.addEventListener('click', () => {
+                if (this._product) {
+                    events.emit(Events.CARD_SELECT, { product: this._product });
+                }
+            });
         }
-      });
-    }
 
-    if (this._button) {
-      this._button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        if (this._product) {
-          if (this._button.textContent === 'Удалить из корзины') {
-            events.emit(Events.BASKET_REMOVE, { productId: this._product.id });
-          } else {
-            events.emit(Events.BASKET_ADD, { product: this._product });
-          }
+        if (this._button) {
+            this._button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (this._product) {
+                    if (this._button.textContent === 'Удалить из корзины') {
+                        events.emit(Events.BASKET_REMOVE, { 
+                          productId: this._product.id,
+                          fromPreview: this.container.classList.contains('card_full')
+                         });
+                    } else {
+                        events.emit(Events.BASKET_ADD, { product: this._product });
+                    }
+                }
+            });
         }
-      });
     }
-  }
 
     set title(value: string) {
         this.setText(this._title, value);
